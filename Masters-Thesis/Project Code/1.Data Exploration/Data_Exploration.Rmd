@@ -1,0 +1,343 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+groups_sdss<-read.csv("C:/Users/rohan/OneDrive/Desktop/SDSS/sdss_data/x18120199_research_project_final.csv")
+summary(groups_sdss)
+```
+
+```{r}
+library(dplyr)
+numeric_data<-dplyr::select_if(groups_sdss, is.numeric)
+```
+
+```{r}
+library(ggplot2)
+library(GGally)
+ggcorr( numeric_data, method = c("pairwise","spearman"),label = TRUE, label_size = 3,color="grey50")
+```
+
+```{r}
+library(cowplot)
+theme_top<- theme_bw()+theme(axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 0.2), 
+                   legend.position="right")
+
+theme_bottom<- theme_bw()+theme(axis.text.x = element_text(angle = 360, hjust = 0.5, vjust = 0.2), 
+                   legend.position="none")
+plot_grid(
+ggplot(groups_sdss, aes(x=class, y=g, fill=class)) + geom_boxplot()+theme_top,
+ggplot(groups_sdss, aes(x=class, y=u, fill=class)) + geom_boxplot()+theme_top,
+ggplot(groups_sdss, aes(x=class, y=r, fill=class)) + geom_boxplot()+theme_top,
+ggplot(groups_sdss, aes(x=class, y=i, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(groups_sdss, aes(x=class, y=z, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(groups_sdss, aes(x=class, y=redshift, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(groups_sdss, aes(x=class, y=mjd, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(groups_sdss, aes(x=class, y=plate, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(groups_sdss, aes(x=class, y=fiberid, fill=class)) + geom_boxplot()+theme_bottom
+)
+```
+
+```{r}
+#Boxplots show outliers-due to the presence of the value -9999, missing values in the SDSS data are denoted as -9999
+#copying groups_sdss to a new dataframe so if things fall apart during experimentation it can be called again 
+sdss<-groups_sdss
+sdss<-sdss[!(sdss$i=="-9999" | sdss$g=='-9999'| sdss$u=='-9999' | sdss$r == '-9999' | sdss$z == '-9999'),]
+summary(sdss)
+```
+
+```{r}
+#checking the boxplots again
+plot_grid(
+ggplot(sdss, aes(x=class, y=g, fill=class)) + geom_boxplot()+theme_top,
+ggplot(sdss, aes(x=class, y=u, fill=class)) + geom_boxplot()+theme_top,
+ggplot(sdss, aes(x=class, y=r, fill=class)) + geom_boxplot()+theme_top,
+ggplot(sdss, aes(x=class, y=i, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(sdss, aes(x=class, y=z, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(sdss, aes(x=class, y=redshift, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(sdss, aes(x=class, y=mjd, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(sdss, aes(x=class, y=plate, fill=class)) + geom_boxplot()+theme_bottom,
+ggplot(sdss, aes(x=class, y=fiberid, fill=class)) + geom_boxplot()+theme_bottom
+)
+```
+
+
+
+```{r}
+library(dplyr)
+sdss_num<-dplyr::select_if(test_undersampled, is.numeric)
+summary(sdss_num)
+```
+
+
+```{r}
+#shapiro wilk normality test does not allow to work on more than 5000 samples as a security feature as for large datasets even small deviations from 
+#normality can be detected leading to null hypothesis rejection even when the data is normally distributed
+library(dplyr)
+normality_test<-sample_n(sdss,4500)
+```
+
+
+```{r}
+shapiro.test(normality_test$u)
+shapiro.test(normality_test$g)
+shapiro.test(normality_test$r)
+shapiro.test(normality_test$i)
+shapiro.test(normality_test$z)
+shapiro.test(normality_test$ra)
+shapiro.test(normality_test$dec)
+shapiro.test(normality_test$fiberid)
+shapiro.test(normality_test$plate)
+shapiro.test(normality_test$redshift)
+shapiro.test(normality_test$field)
+```
+
+
+```{r}
+library(fitdistrplus)
+```
+
+```{r}
+#Cullen and Frey graph for ultraviolet light filter
+descdist(sdss$u, discrete=FALSE,boot=200)
+```
+
+```{r}
+#Cullen and Frey graph for green and blue visible light filter
+descdist(sdss$g, discrete=FALSE,boot=200)
+```
+
+```{r}
+#Cullen and Frey graph for red and yellow visible light filter
+descdist(sdss$r, discrete=FALSE,boot=200)
+```
+
+```{r}
+#Cullen and Frey graph for near infrared light filter
+descdist(sdss$i, discrete=FALSE,boot=200)
+```
+
+```{r}
+#Cullen and Frey graph for infrared light filter
+descdist(sdss$z, discrete=FALSE,boot=200)
+```
+
+```{r}
+#Cullen and Frey graph for right ascension- location data
+descdist(sdss$ra, discrete=FALSE,boot=200)
+```
+
+```{r}
+#Cullen and Frey graph for declination - location data 
+descdist(sdss$dec, discrete=FALSE,boot=200)
+```
+
+```{r}
+#Cullen and Frey graph for plate-spectroscopic data
+descdist(sdss$plate, discrete=FALSE,boot=200)
+```
+
+```{r}
+#Cullen and Frey graph for mjd-spectroscopic data
+descdist(sdss$mjd, discrete=FALSE,boot=20)
+```
+
+```{r}
+#Cullen and Frey graph for fibreid-spectroscopic data
+descdist(sdss$fiberid, discrete=FALSE,boot=200)
+```
+
+```{r}
+library(cowplot)
+#theme for the density plots 
+theme_top<- theme_bw()+theme(axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 0.2), 
+                   legend.position="right")
+
+theme_bottom<- theme_bw()+theme(axis.text.x = element_text(angle = 360, hjust = 0.5, vjust = 0.2), 
+                   legend.position="none")
+```
+
+
+```{r}
+#Checking linear separability of data in two dimensions
+plot_grid(
+ggplot(sdss, aes(x = r, y = g , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom,
+ggplot(sdss, aes(x = i, y = g , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom,
+ggplot(sdss, aes(x = z, y = g , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom,
+ggplot(sdss, aes(x = u, y = g , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom,
+ggplot(sdss, aes(x = r, y = u , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom,
+ggplot(sdss, aes(x = z, y = u , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom,
+ggplot(sdss, aes(x = i, y = u , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom,
+ggplot(sdss, aes(x = r, y = i , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom,
+ggplot(sdss, aes(x = z, y = i , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom,
+ggplot(sdss, aes(x = r, y = z , colour = sdss$class)) + geom_point() + stat_ellipse(type = "norm", linetype = 2)+theme_bottom)
+```
+
+```{r}
+#Density plot for the photometric data
+plot_grid(
+          ggplot(sdss, aes(u, fill = class)) +theme_bottom+ geom_density(alpha = 0.7),
+          ggplot(sdss, aes(g, fill = class)) +theme_bottom+ geom_density(alpha = 0.7),
+          ggplot(sdss, aes(r, fill = class)) + theme_bottom+geom_density(alpha = 0.7),
+          ggplot(sdss, aes(i, fill = class)) +theme_bottom+ geom_density(alpha = 0.7),
+          ggplot(sdss, aes(z, fill = class)) +theme_top+ geom_density(alpha = 0.7),
+          align = "h")
+```
+
+```{r}
+#DEnsity plot for location data
+plot_grid(ggplot(sdss, aes(ra, fill = class)) + geom_density(alpha = 0.9)+theme_top, 
+          ggplot(sdss, aes(dec, fill = class)) + geom_density(alpha = 0.7)+theme_top,
+          align = "h")
+```
+
+```{r}
+#Density plot for the spectroscopic data
+plot_grid(ggplot(sdss, aes(plate, fill = class)) + geom_density(alpha = 0.9)+theme_bottom, 
+          ggplot(sdss, aes(mjd, fill = class)) + geom_density(alpha = 0.7)+theme_bottom,
+          ggplot(sdss, aes(fiberid, fill = class)) + geom_density(alpha = 0.7)+theme_bottom,
+          align = "h")
+```
+```{r}
+#Class distribution plot
+library(plotly)
+class_plot<-ggplotly(ggplot(sdss, aes(class, fill = class)) + geom_bar()+theme_bw())
+class_plot
+#class count
+sdss_class_count<- table(sdss$class)
+cbind(sdss_class_count,prop.table(sdss_class_count)*100)
+```
+
+```{r}
+#3d plots would crash after passing the entire dataset, so a suset of data was used for plotting them 
+library(caTools)
+set.seed(18120199) 
+sample = sample.split(sdss$class, SplitRatio = .80)
+train = subset(sdss, sample == TRUE)
+test  = subset(sdss, sample == FALSE)
+```
+
+```{r}
+#The data was undersampled as in the 3D plots only one class(galaxy) would be dominantly visible and it would overlap the other classes
+library(UBL)
+library(MASS)
+test_undersampled <- RandUnderClassif(class~., test, "balance")
+summary(test_undersampled)
+```
+
+```{r}
+#3d plots, spectroscopic data needs to be scaled as they all have a different scale
+#scaled_data<-scale(test_undersampled[c('mjd','plate','fiberid')])
+test_undersampled['mjd']=scale(test_undersampled['mjd'])
+test_undersampled['plate']=scale(test_undersampled['plate'])
+test_undersampled['fiberid']=scale(test_undersampled['fiberid'])
+test_undersampled['mjd']
+library(plotly)
+sd_spec <- plot_ly(test_undersampled, x = ~plate, y = ~mjd, z = ~fiberid, color = ~class, colors = c('red', 'blue', 'green')) %>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'Plate'),
+                     yaxis = list(title = 'mjd'),
+                     zaxis = list(title = 'fiberid')))
+sd_spec
+```
+
+
+```{r}
+Sys.setenv("plotly_username"="rohandongare")
+Sys.setenv("plotly_api_key"="")
+```
+
+```{r}
+#3d plot for color bands with infrared data
+library(plotly)
+sdss_color <- plot_ly(test_undersampled, x = ~i, y = ~u, z = ~g, color = ~class, colors = c('red', 'blue', 'green')) %>% add_markers() %>% layout(scene = list(xaxis =                      list(title = 'Infrared Band'),
+                     yaxis = list(title = 'red and yellow Band'),
+                     zaxis = list(title = 'green and blue Band')))
+
+sdss_color
+```
+
+
+```{r}
+library(ggfortify)
+library(dplyr)
+pre_pca<-dplyr::select(test,-class)
+autoplot(prcomp(pre_pca, scale. = T, center = T), data = test, colour = 'class')
+```
+
+```{r}
+library(factoextra)
+library(FactoMineR)
+pca <- PCA(pre_pca, scale.unit = T, ncp=3)
+```
+
+```{r}
+fviz_screeplot(pca, addlabels = TRUE)
+```
+
+```{r}
+fviz_pca_ind(pca, habillage = test$class, label="none", addEllipses = T)
+```
+
+```{r}
+#MRMR feature selection was tried in R but failed as the target variable was expected to be an ordered factor 
+library(MRMR)
+```
+
+```{r}
+#Testing MRMRe in R/already performed in python
+#MRMRe cannot be used as it requires target variable to have ordered factors which is not true for this study
+library(mRMRe)
+mrmr_data<-test
+mrmr_data$class
+mrmr_data$class<-as.factor(mrmr_data$class)
+mrmr_data$class<-as.numeric(mrmr_data$class)
+mrmr_data$fiberid<-as.numeric(mrmr_data$fiberid)
+mrmr_data$mjd<-as.numeric(mrmr_data$mjd)
+mrmr_data$plate<-as.numeric(mrmr_data$plate)
+mrmr_data$field<-as.numeric(mrmr_data$field)
+summary(mrmr_data)
+mrmr_data$objid<-NULL
+mrmr_data[c('run','rerun','camcol')]<-NULL
+sapply(mrmr_data,class)
+data2=mRMR.data(data = data.frame(target=mrmr_data$class,mrmr_data))
+
+mRMR.ensemble(data = data, target_indices = 1, 
+              feature_count = 11, solution_count = 1)
+```
+
+```{r}
+#using boruta for feature selection to find variable importance as to confirm the findings of MRMR applied in the python script
+feature_selection<-read.csv("C:/Users/rohan/OneDrive/Desktop/SDSS/sdss_data/Feature Selection.csv")
+library(UBL)
+library(MASS)
+feature_selection_un <- RandUnderClassif(class~., feature_selection, "balance")
+library(Boruta)
+boruta_output <- Boruta(feature_selection$class ~ ., data=feature_selection_un, doTrace=2, maxRuns=100, holdHistory=TRUE) 
+ ```
+```{r}
+print(boruta_output)
+```
+
+```{r}
+boruta.df <- attStats(boruta_output)
+```
+
+```{r}
+plot(boruta_output)
+```
+
+```{r}
+print(boruta.df)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
